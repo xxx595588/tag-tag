@@ -3,6 +3,7 @@ import MalmoPython
 import os
 import sys
 import time
+import numpy as np
 
 if sys.version_info[0] == 2:
     sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)  # flush print output immediately
@@ -12,7 +13,11 @@ else:
 
 def playground(x, y, z, blocktype):
     pg_str = ""
+    # length of the playground
     size = 30
+
+    # density of obstacles
+    d = 0.05
 
     # back fence
     pg_str += '<DrawLine x1="' + str(x+1) + '" y1="' + str(y) + '" z1="' + str(z) + '" x2="' + str(x+1) + '" y2="'+ str(y) +'" z2="' + str(z+int(size/2)) + '" type="' + blocktype + '"/>\n'
@@ -25,8 +30,20 @@ def playground(x, y, z, blocktype):
     # side fence
     pg_str += '<DrawLine x1="' + str(x-size) + '" y1="' + str(y) + '" z1="' + str(z+int(size/2)) + '" x2="' + str(x+1) + '" y2="'+ str(y) +'" z2="' + str(z+int(size/2)) + '" type="' + blocktype + '"/>\n'
     pg_str += '<DrawLine x1="' + str(x-size) + '" y1="' + str(y) + '" z1="' + str(z-int(size/2)) + '" x2="' + str(x+1) + '" y2="'+ str(y) +'" z2="' + str(z-int(size/2)) + '" type="' + blocktype + '"/>\n'
-    
-    print(pg_str)
+
+    # randomly place obstacles
+    obs = np.zeros(((size - 3)**2,), dtype = np.int8)
+    obs[np.random.choice((size - 3)**2, replace = False, size = int(((size - 3)**2)*d) )] = 1
+    obs = np.reshape(obs, (size - 3, size - 3))
+    print(np.where(obs == 1))
+    p = np.where(obs == 1)
+
+    x = -(size - 2)
+    z = -(int(size / 2) - 2)
+
+    for i, j in zip(np.where(obs == 1)[1], np.where(obs == 1)[0]):
+        pg_str += '<DrawLine x1="' + str(x+i) + '" y1="' + str(y) + '" z1="' + str(z+j) + '" x2="' + str(x+i) + '" y2="' + str(y+1) + '" z2="' + str(z+j) + '" type="bedrock"/>\n'
+            
     return pg_str
 
 missionXML='''<?xml version="1.0" encoding="UTF-8" standalone="no" ?>

@@ -35,9 +35,7 @@ def playground(x, y, z, blocktype):
     obs = np.zeros(((size - 3)**2,), dtype = np.int8)
     obs[np.random.choice((size - 3)**2, replace = False, size = int(((size - 3)**2)*d) )] = 1
     obs = np.reshape(obs, (size - 3, size - 3))
-    print(np.where(obs == 1))
-    p = np.where(obs == 1)
-
+  
     x = -(size - 2)
     z = -(int(size / 2) - 2)
 

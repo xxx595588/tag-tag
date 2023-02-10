@@ -50,7 +50,6 @@ def playground(x, y, z, blocktype):
     obs[np.random.choice(SIZE**2, replace = False, size = int((SIZE**2)*d) )] = 1
     obs = np.reshape(obs, (SIZE ,SIZE))
     map = obs
-    print(map)
   
     x = -(SIZE)
     z = -(int(SIZE/2))

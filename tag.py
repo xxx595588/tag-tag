@@ -5,13 +5,14 @@ import os
 import sys
 import time
 import json
-import math
 import numpy as np
 
 # length of the playground
 SIZE = 30
 RUNNER_Z = 0.5
 RUNNER_X = -0.5
+TAGGER_Z = 0.5
+TAGGER_X = -29.5
 
 map = []
 
@@ -49,8 +50,7 @@ def playground(x, y, z, blocktype):
     obs = np.zeros((SIZE **2,), dtype = np.int8)
     obs[np.random.choice(SIZE**2, replace = False, size = int((SIZE**2)*d) )] = 1
     obs = np.reshape(obs, (SIZE ,SIZE))
-    map = obs
-    print(map)
+    map = np.rot90(obs, 1)  
   
     x = -(SIZE)
     z = -(int(SIZE/2))
@@ -59,7 +59,6 @@ def playground(x, y, z, blocktype):
         pg_str += '<DrawLine x1="' + str(x+i) + '" y1="' + str(y) + '" z1="' + str(z+j+1) + '" x2="' + str(x+i) + '" y2="' + str(y+1) + '" z2="' + str(z+j+1) + '" type="bedrock"/>\n'
             
     return pg_str
-
 
 missionXML='''<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
             <Mission xmlns="http://ProjectMalmo.microsoft.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -102,83 +101,154 @@ missionXML='''<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
                   <ContinuousMovementCommands turnSpeedDegs="180"/>
                 </AgentHandlers>
               </AgentSection>
+
+              <AgentSection mode="Survival">
+                <Name>Tagger</Name>
+                <AgentStart>
+                  <Placement x="-29.5" y="2" z="0.5" yaw="-90"/>
+                </AgentStart>
+                <AgentHandlers>
+                <ObservationFromGrid>
+                <Grid name="floor3x3">
+                <min x="-1" y="0" z="-1"/>
+                <max x="1" y="0" z="1"/>
+                </Grid>
+                </ObservationFromGrid>
+                  <ObservationFromFullStats/>
+                  <ContinuousMovementCommands turnSpeedDegs="180"/>
+                </AgentHandlers>
+              </AgentSection>
             </Mission>'''
 
-
-# Create default Malmo objects:
-
-agent_host = MalmoPython.AgentHost()
-try:
-    agent_host.parse( sys.argv )
-except RuntimeError as e:
-    print('ERROR:',e)
-    print(agent_host.getUsage())
-    exit(1)
-if agent_host.receivedArgument("help"):
-    print(agent_host.getUsage())
-    exit(0)
-
-my_mission = MalmoPython.MissionSpec(missionXML, True)
-my_mission_record = MalmoPython.MissionRecordSpec()
-
-# Attempt to start a mission:
-max_retries = 3
-for retry in range(max_retries):
-    try:
-        agent_host.startMission( my_mission, my_mission_record )
-        break
-    except RuntimeError as e:
-        if retry == max_retries - 1:
-            print("Error starting mission:",e)
+def safeStartMission(agent_host, mission, client_pool, recording, role, experimentId):
+    used_attempts = 0
+    max_attempts = 5
+    print("Calling startMission for role", role)
+    while True:
+        try:
+            agent_host.startMission(mission, client_pool, recording, role, experimentId)
+            break
+        except MalmoPython.MissionException as e:
+            errorCode = e.details.errorCode
+            if errorCode == MalmoPython.MissionErrorCode.MISSION_SERVER_WARMING_UP:
+                print("Server not quite ready yet - waiting...")
+                time.sleep(2)
+            elif errorCode == MalmoPython.MissionErrorCode.MISSION_INSUFFICIENT_CLIENTS_AVAILABLE:
+                print("Not enough available Minecraft instances running.")
+                used_attempts += 1
+                if used_attempts < max_attempts:
+                    print("Will wait in case they are starting up.", max_attempts - used_attempts, "attempts left.")
+                    time.sleep(2)
+            elif errorCode == MalmoPython.MissionErrorCode.MISSION_SERVER_NOT_FOUND:
+                print("Server not found - has the mission with role 0 been started yet?")
+                used_attempts += 1
+                if used_attempts < max_attempts:
+                    print("Will wait and retry.", max_attempts - used_attempts, "attempts left.")
+                    time.sleep(2)
+            else:
+                print("Other error:", e.message)
+                print("Waiting will not help here - bailing immediately.")
+                exit(1)
+        if used_attempts == max_attempts:
+            print("All chances used up - bailing now.")
             exit(1)
-        else:
-            time.sleep(2)
+    print("startMission called okay.")
 
-# Loop until mission starts:
-print("Waiting for the mission to start ", end=' ')
-world_state = agent_host.getWorldState()
-while not world_state.has_mission_begun:
-    print(".", end="")
-    time.sleep(0.1)
-    world_state = agent_host.getWorldState()
-    for error in world_state.errors:
-        print("Error:",error.text)
+def safeWaitForStart(agent_hosts):
+    print("Waiting for the mission to start", end=' ')
+    start_flags = [False for a in agent_hosts]
+    start_time = time.time()
+    time_out = 120  # Allow two minutes for mission to start.
+    while not all(start_flags) and time.time() - start_time < time_out:
+        states = [a.peekWorldState() for a in agent_hosts]
+        start_flags = [w.has_mission_begun for w in states]
+        errors = [e for w in states for e in w.errors]
+        if len(errors) > 0:
+            print("Errors waiting for mission start:")
+            for e in errors:
+                print(e.text)
+            print("Bailing now.")
+            exit(1)
+        time.sleep(0.1)
+        print(".", end=' ')
 
-print("Mission running ", end=' ')
+    if time.time() - start_time >= time_out:
+        print("Timed out waiting for mission to begin. Bailing.")
+        exit(1)
+    print("Mission has started.")
 
-pmap = playgroundMap(map)
+def main():
+  # Create default Malmo objects:
+  runner = MalmoPython.AgentHost()
+  tagger = MalmoPython.AgentHost()
 
-# Loop until mission ends:
-while world_state.is_mission_running:
-    print(".", end="")
-    time.sleep(0.1)
-    world_state = agent_host.getWorldState()
-    if world_state.number_of_observations_since_last_state > 0:
-        msg = world_state.observations[0].text
-        observations = json.loads(msg)
-        grid = observations.get(f"floor3x3", 0)
-        if RUNNER_Z-observations.get("ZPos", 0) < -0.5:
-          pmap.render(abs(int(observations.get("XPos", 0))), int(SIZE/2 - observations.get("ZPos", 0)+1), True)
-          RUNNER_Z += 1
-        elif RUNNER_Z-observations.get("ZPos", 0) > 0.5:
-          pmap.render(abs(int(observations.get("XPos", 0))), int(SIZE/2 - observations.get("ZPos", 0)+1), True)
-          RUNNER_Z -= 1
-        elif RUNNER_X-observations.get("XPos", 0) < -0.5:
-          pmap.render(abs(math.ceil(observations.get("XPos", 0))), int(SIZE/2 - observations.get("ZPos", 0)+1), False)
-          RUNNER_X += 1
-        elif RUNNER_X-observations.get("XPos", 0) > 0.5:
-          pmap.render(abs(math.ceil(observations.get("XPos", 0))), int(SIZE/2 - observations.get("ZPos", 0)+1), False)
-          RUNNER_X -= 1
-        
-        """
-        6 3 0
-        7 4 1
-        8 5 2
-        position 4 is runner's current position
-        """
+  my_mission = MalmoPython.MissionSpec(missionXML, True)
+  runner_mission_record = MalmoPython.MissionRecordSpec()
+  tagger_mission_record = MalmoPython.MissionRecordSpec()
 
-    for error in world_state.errors:
-        print("Error:",error.text)
+  client_pool = MalmoPython.ClientPool()
+  client_pool.add( MalmoPython.ClientInfo("127.0.0.1",10000) )
+  client_pool.add( MalmoPython.ClientInfo("127.0.0.1",10001) )
 
-print("Mission ended")
-# Mission has ended.
+  safeStartMission(runner, my_mission, client_pool, runner_mission_record, 0, "")
+  safeStartMission(tagger, my_mission, client_pool, tagger_mission_record, 1, "")
+  safeWaitForStart([runner, tagger])
+
+  print("Mission running ", end=' ')
+
+  global RUNNER_Z, RUNNER_X, TAGGER_Z, TAGGER_X
+
+  pmap = playgroundMap(map, int(SIZE/2-RUNNER_Z+1), abs(int(RUNNER_X)), int(SIZE/2-TAGGER_Z+1), abs(int(TAGGER_X)))
+
+  # Loop until mission ends:
+  #while world_state.is_mission_running:
+  while True:
+      #print(".", end="")
+      time.sleep(0.1)
+      runner_world_state = runner.getWorldState()
+      tagger_world_state = tagger.getWorldState()
+      #print(f"Runner at ({RUNNER_Z}, {RUNNER_X})")
+      #print(f"Tagger at ({TAGGER_Z}, {TAGGER_X})")
+
+      if runner_world_state.number_of_observations_since_last_state > 0:
+          runner_obs = json.loads(runner_world_state.observations[0].text)
+          grid = runner_obs.get(f"floor3x3", 0)
+          if runner_obs.get("ZPos", 0)-RUNNER_Z < -0.5:
+              pmap.render(int(SIZE/2-runner_obs.get("ZPos", 0)+1), abs(int(runner_obs.get("XPos", 0))), 0)
+              RUNNER_Z -= 1
+          elif runner_obs.get("ZPos", 0)-RUNNER_Z > 0.5:
+              pmap.render(int(SIZE/2-runner_obs.get("ZPos", 0)+1), abs(int(runner_obs.get("XPos", 0))), 0)
+              RUNNER_Z += 1
+          elif RUNNER_X-runner_obs.get("XPos", 0) < -0.5:
+              pmap.render(int(SIZE/2-runner_obs.get("ZPos", 0)+1), abs(int(runner_obs.get("XPos", 0))), 0)
+              RUNNER_X += 1
+          elif RUNNER_X-runner_obs.get("XPos", 0) > 0.5:
+              pmap.render(int(SIZE/2-runner_obs.get("ZPos", 0)+1), abs(int(runner_obs.get("XPos", 0))), 0)
+              RUNNER_X -= 1
+
+      if tagger_world_state.number_of_observations_since_last_state > 0:
+          tagger_obs = json.loads(tagger_world_state.observations[0].text)
+          grid = tagger_obs.get(f"floor3x3", 0)
+          if tagger_obs.get("ZPos", 0)-TAGGER_Z < -0.5:
+              pmap.render(int(SIZE/2-tagger_obs.get("ZPos", 0)+1), abs(int(tagger_obs.get("XPos", 0))), 1)
+              TAGGER_Z -= 1
+          elif tagger_obs.get("ZPos", 0)-TAGGER_Z > 0.5:
+              pmap.render(int(SIZE/2-tagger_obs.get("ZPos", 0)+1), abs(int(tagger_obs.get("XPos", 0))), 1)
+              TAGGER_Z += 1
+          elif TAGGER_X-tagger_obs.get("XPos", 0) < -0.5:
+              pmap.render(int(SIZE/2-tagger_obs.get("ZPos", 0)+1), abs(int(tagger_obs.get("XPos", 0))), 1)
+              TAGGER_X += 1
+          elif TAGGER_X-tagger_obs.get("XPos", 0) > 0.5:
+              pmap.render(int(SIZE/2-tagger_obs.get("ZPos", 0)+1), abs(int(tagger_obs.get("XPos", 0))), 1)
+              TAGGER_X -= 1
+
+      for error in runner_world_state.errors:
+          print("Error:",error.text)
+      for error in tagger_world_state.errors:
+          print("Error:",error.text)
+
+  print("Mission ended")
+  # Mission has ended.
+
+if __name__ == "__main__":
+    main()

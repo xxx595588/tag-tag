@@ -201,7 +201,6 @@ def main():
   pmap = playgroundMap(map, int(SIZE/2-RUNNER_Z+1), abs(int(RUNNER_X)), int(SIZE/2-TAGGER_Z+1), abs(int(TAGGER_X)))
 
   # Loop until mission ends:
-  #while world_state.is_mission_running:
   while True:
       #print(".", end="")
       time.sleep(0.1)

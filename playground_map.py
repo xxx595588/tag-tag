@@ -9,10 +9,18 @@ class playgroundMap():
         self.window = Tk()
         self.grid = []
         self.window.title("Playground Map")
-        self.runner_pre_x = runner_x
-        self.runner_pre_z = runner_z
-        self.tagger_pre_x = tagger_x
-        self.tagger_pre_z = tagger_z
+
+        self.runner_cur_x = runner_x
+        self.runner_cur_z = runner_z
+        self.tagger_cur_x = tagger_x
+        self.tagger_cur_z = tagger_z
+
+        self.runner_pre_x = None
+        self.runner_pre_z = None
+        self.tagger_pre_x = None
+        self.tagger_pre_z = None
+
+        Canvas(self.window, bg="black")
 
         Canvas(self.window, bg="black")
 
@@ -38,42 +46,39 @@ class playgroundMap():
         
         self.window.update()
 
-    def render(self, z, x, id):        
-        # when runner move horizontally 
-        
+    def render(self, z, x, id):  
         if id == 0:
-            #if((z-self.runner_pre_z)**2 + (x-self.runner_pre_x)**2) > 1:
-            self.clean_trace(self.runner_pre_z, self.runner_pre_x, id)
-           
+            self.runner_pre_z = self.runner_cur_z
+            self.runner_pre_x = self.runner_cur_x
+            self.runner_cur_z = z
+            self.runner_cur_x = x
+            self.clean_trace(self.runner_pre_z, self.runner_pre_x)
             self.map[x][SIZE-1-z] = 8
             self.map[self.runner_pre_x][SIZE-1-self.runner_pre_z] = 0
-            self.runner_pre_z = z
-            self.runner_pre_x = x
+            
         else:
-            #if((z-self.tagger_pre_z)**2 + (x-self.tagger_pre_x)**2) > 1:
-            self.clean_trace(self.tagger_pre_z, self.tagger_pre_x, id)
-           
+            self.tagger_pre_z = self.tagger_cur_z
+            self.tagger_pre_x = self.tagger_cur_x
+            self.tagger_cur_z = z
+            self.tagger_cur_x = x
+            self.clean_trace(self.tagger_pre_z, self.tagger_pre_x)
             self.map[x][SIZE-1-z] = 4
             self.map[self.tagger_pre_x][SIZE-1-self.tagger_pre_z] = 0
-            self.tagger_pre_z = z
-            self.tagger_pre_x = x
+            
 
         self.grid = np.flip(self.grid, axis=0)
-
-        if id == 0:
-            self.grid[x][z].configure(bg="red")
-        else:
-            self.grid[x][z].configure(bg="blue")
+        self.grid[self.runner_cur_x][self.runner_cur_z].configure(bg="red")
+        self.grid[self.tagger_cur_x][self.tagger_cur_z].configure(bg="blue")
 
         self.grid = np.flip(self.grid, axis=0)
         self.window.update()
 
-    def clean_trace(self, z, x, id):
+    def clean_trace(self, z, x):
         self.grid = np.flip(self.grid, axis=0)
 
         # clean up previous position
         for i in range(len(self.map[x])-1, -1, -1):
-            if self.map[x][i]== 1:
+            if self.map[x][i] == 1:
                 self.grid[x][SIZE-i-1].configure(bg="black")
             else:
                 self.grid[x][SIZE-i-1].configure(bg="white")

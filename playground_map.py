@@ -1,7 +1,7 @@
 import numpy as np
 from tkinter import *
 
-SIZE = 30
+SIZE = 20
 
 class playgroundMap():
     def __init__(self, map, runner_z, runner_x, tagger_z, tagger_x):
@@ -19,8 +19,6 @@ class playgroundMap():
         self.runner_pre_z = None
         self.tagger_pre_x = None
         self.tagger_pre_z = None
-
-        Canvas(self.window, bg="black")
 
         Canvas(self.window, bg="black")
 
@@ -46,7 +44,7 @@ class playgroundMap():
         
         self.window.update()
 
-    def render(self, z, x, id):  
+    def render(self, z, x, id):
         if id == 0:
             self.runner_pre_z = self.runner_cur_z
             self.runner_pre_x = self.runner_cur_x

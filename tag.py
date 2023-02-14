@@ -1,20 +1,45 @@
 from builtins import range
 import MalmoPython
 from playground_map import playgroundMap
+from map import map
 import os
 import sys
 import time
 import json
+import random
+import math
 import numpy as np
 
 # length of the playground
-SIZE = 30
+SIZE = 20
 RUNNER_Z = 0.5
 RUNNER_X = -0.5
 TAGGER_Z = 0.5
-TAGGER_X = -29.5
+TAGGER_X = -(SIZE-0.5)
 
-map = []
+plain_map = np.array([
+                     [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+                     [0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+                     [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1],
+                     [0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+                     [0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1],
+                     [1,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1],
+                     [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1],
+                     [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+                     [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  0,  0,  0],
+                     [0,  0,  0,  0,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  0,  0,  0,  0],
+                     [0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+                     [0,  0,  0,  0,  0,  0,  0,  0,  1,  0,  0,  0,  0,  1,  0,  1,  0,  0,  0,  0],
+                     [0,  0,  0,  1,  0,  0,  0,  0,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+                     [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  0,  0,  0,  0],
+                     [0,  1,  0,  0,  0,  0,  0,  0,  1,  0,  0,  0,  1,  0,  0,  1,  0,  0,  0,  0],
+                     [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+                     [0,  0,  0,  0,  1,  0,  1,  0,  0,  0,  0,  0,  0,  0,  1,  0,  0,  0,  0,  0],
+                     [0,  1,  0,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  0,  0,  0],
+                     [0,  0,  0,  0,  0,  0,  0,  0,  1,  0,  1,  0,  0,  0,  0,  0,  0,  0,  1,  0],
+                     [0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  0,  0,  1,  0]])
+
+my_map = None
 
 if sys.version_info[0] == 2:
     sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)  # flush print output immediately
@@ -23,7 +48,7 @@ else:
     print = functools.partial(print, flush=True)
 
 def playground(x, y, z, blocktype):
-    global map
+    global plain_map
     pg_str = ""
 
     # density of obstacles
@@ -50,7 +75,12 @@ def playground(x, y, z, blocktype):
     obs = np.zeros((SIZE **2,), dtype = np.int8)
     obs[np.random.choice(SIZE**2, replace = False, size = int((SIZE**2)*d) )] = 1
     obs = np.reshape(obs, (SIZE ,SIZE))
-    map = np.rot90(obs, 1)  
+    plain_map = np.rot90(obs, 1)
+    print((abs(int(RUNNER_X)), int(SIZE/2-RUNNER_Z+1)))
+    plain_map[abs(int(RUNNER_X))][int(SIZE/2-RUNNER_Z)] = 0
+    plain_map[abs(int(TAGGER_X))][int(SIZE/2-TAGGER_Z)] = 0
+
+    print(plain_map)
   
     x = -(SIZE)
     z = -(int(SIZE/2))
@@ -78,7 +108,58 @@ missionXML='''<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
                 <ServerHandlers>
                   <FlatWorldGenerator generatorString="3;1*minecraft:bedrock,1*minecraft:grass;2;village"/>
                   <DrawingDecorator>
-                  ''' + playground(0, 2, 0, "bedrock") + '''
+                  <DrawLine x1="0" y1="2" z1="0" x2="0" y2="2" z2="11" type="bedrock"/>
+                    <DrawLine x1="0" y1="2" z1="0" x2="0" y2="2" z2="-10" type="bedrock"/>
+                    <DrawLine x1="0" y1="3" z1="0" x2="0" y2="3" z2="11" type="bedrock"/>
+                    <DrawLine x1="0" y1="3" z1="0" x2="0" y2="3" z2="-10" type="bedrock"/>
+                    <DrawLine x1="-21" y1="2" z1="0" x2="-21" y2="2" z2="11" type="bedrock"/>
+                    <DrawLine x1="-21" y1="2" z1="0" x2="-21" y2="2" z2="-10" type="bedrock"/>
+                    <DrawLine x1="-21" y1="3" z1="0" x2="-21" y2="3" z2="11" type="bedrock"/>
+                    <DrawLine x1="-21" y1="3" z1="0" x2="-21" y2="3" z2="-10" type="bedrock"/>
+                    <DrawLine x1="-20" y1="2" z1="11" x2="0" y2="2" z2="11" type="bedrock"/>
+                    <DrawLine x1="-20" y1="2" z1="-10" x2="0" y2="2" z2="-10" type="bedrock"/>
+                    <DrawLine x1="-20" y1="3" z1="11" x2="0" y2="3" z2="11" type="bedrock"/>
+                    <DrawLine x1="-20" y1="3" z1="-10" x2="0" y2="3" z2="-10" type="bedrock"/>
+                    <DrawLine x1="-6" y1="2" z1="-9" x2="-6" y2="3" z2="-9" type="bedrock"/>
+                    <DrawLine x1="-20" y1="2" z1="-8" x2="-20" y2="3" z2="-8" type="bedrock"/>
+                    <DrawLine x1="-18" y1="2" z1="-8" x2="-18" y2="3" z2="-8" type="bedrock"/>
+                    <DrawLine x1="-15" y1="2" z1="-8" x2="-15" y2="3" z2="-8" type="bedrock"/>
+                    <DrawLine x1="-2" y1="2" z1="-7" x2="-2" y2="3" z2="-7" type="bedrock"/>
+                    <DrawLine x1="-18" y1="2" z1="-6" x2="-18" y2="3" z2="-6" type="bedrock"/>
+                    <DrawLine x1="-13" y1="2" z1="-6" x2="-13" y2="3" z2="-6" type="bedrock"/>
+                    <DrawLine x1="-6" y1="2" z1="-6" x2="-6" y2="3" z2="-6" type="bedrock"/>
+                    <DrawLine x1="-5" y1="2" z1="-6" x2="-5" y2="3" z2="-6" type="bedrock"/>
+                    <DrawLine x1="-18" y1="2" z1="-5" x2="-18" y2="3" z2="-5" type="bedrock"/>
+                    <DrawLine x1="-17" y1="2" z1="-5" x2="-17" y2="3" z2="-5" type="bedrock"/>
+                    <DrawLine x1="-10" y1="2" z1="-5" x2="-10" y2="3" z2="-5" type="bedrock"/>
+                    <DrawLine x1="-10" y1="2" z1="-4" x2="-10" y2="3" z2="-4" type="bedrock"/>
+                    <DrawLine x1="-17" y1="2" z1="-3" x2="-17" y2="3" z2="-3" type="bedrock"/>
+                    <DrawLine x1="-19" y1="2" z1="-1" x2="-19" y2="3" z2="-1" type="bedrock"/>
+                    <DrawLine x1="-15" y1="2" z1="-1" x2="-15" y2="3" z2="-1" type="bedrock"/>
+                    <DrawLine x1="-13" y1="2" z1="-1" x2="-13" y2="3" z2="-1" type="bedrock"/>
+                    <DrawLine x1="-12" y1="2" z1="-1" x2="-12" y2="3" z2="-1" type="bedrock"/>
+                    <DrawLine x1="-13" y1="2" z1="0" x2="-13" y2="3" z2="0" type="bedrock"/>
+                    <DrawLine x1="-11" y1="2" z1="0" x2="-11" y2="3" z2="0" type="bedrock"/>
+                    <DrawLine x1="-4" y1="2" z1="0" x2="-4" y2="3" z2="0" type="bedrock"/>
+                    <DrawLine x1="-19" y1="2" z1="1" x2="-19" y2="3" z2="1" type="bedrock"/>
+                    <DrawLine x1="-15" y1="2" z1="3" x2="-15" y2="3" z2="3" type="bedrock"/>
+                    <DrawLine x1="-12" y1="2" z1="4" x2="-12" y2="3" z2="4" type="bedrock"/>
+                    <DrawLine x1="-17" y1="2" z1="5" x2="-17" y2="3" z2="5" type="bedrock"/>
+                    <DrawLine x1="-20" y1="2" z1="6" x2="-20" y2="3" z2="6" type="bedrock"/>
+                    <DrawLine x1="-15" y1="2" z1="6" x2="-15" y2="3" z2="6" type="bedrock"/>
+                    <DrawLine x1="-14" y1="2" z1="6" x2="-14" y2="3" z2="6" type="bedrock"/>
+                    <DrawLine x1="-12" y1="2" z1="6" x2="-12" y2="3" z2="6" type="bedrock"/>
+                    <DrawLine x1="-10" y1="2" z1="6" x2="-10" y2="3" z2="6" type="bedrock"/>
+                    <DrawLine x1="-9" y1="2" z1="6" x2="-9" y2="3" z2="6" type="bedrock"/>
+                    <DrawLine x1="-18" y1="2" z1="7" x2="-18" y2="3" z2="7" type="bedrock"/>
+                    <DrawLine x1="-9" y1="2" z1="7" x2="-9" y2="3" z2="7" type="bedrock"/>
+                    <DrawLine x1="-20" y1="2" z1="9" x2="-20" y2="3" z2="9" type="bedrock"/>
+                    <DrawLine x1="-19" y1="2" z1="9" x2="-19" y2="3" z2="9" type="bedrock"/>
+                    <DrawLine x1="-3" y1="2" z1="9" x2="-3" y2="3" z2="9" type="bedrock"/>
+                    <DrawLine x1="-7" y1="2" z1="10" x2="-7" y2="3" z2="10" type="bedrock"/>
+                    <DrawLine x1="-6" y1="2" z1="10" x2="-6" y2="3" z2="10" type="bedrock"/>
+                    <DrawLine x1="-5" y1="2" z1="10" x2="-5" y2="3" z2="10" type="bedrock"/>
+                    <DrawLine x1="-3" y1="2" z1="10" x2="-3" y2="3" z2="10" type="bedrock"/>
                   </DrawingDecorator>
                   <ServerQuitFromTimeUp timeLimitMs="300000"/>
                   <ServerQuitWhenAnyAgentFinishes/>
@@ -91,6 +172,7 @@ missionXML='''<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
                   <Placement x="-0.5" y="2" z="0.5" yaw="90"/>
                 </AgentStart>
                 <AgentHandlers>
+                <DiscreteMovementCommands/>
                 <ObservationFromGrid>
                 <Grid name="floor3x3">
                 <min x="-1" y="0" z="-1"/>
@@ -105,9 +187,10 @@ missionXML='''<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
               <AgentSection mode="Survival">
                 <Name>Tagger</Name>
                 <AgentStart>
-                  <Placement x="-29.5" y="2" z="0.5" yaw="-90"/>
+                  <Placement x="-19.5" y="2" z="0.5" yaw="-90"/>
                 </AgentStart>
                 <AgentHandlers>
+                <DiscreteMovementCommands/>
                 <ObservationFromGrid>
                 <Grid name="floor3x3">
                 <min x="-1" y="0" z="-1"/>
@@ -177,6 +260,62 @@ def safeWaitForStart(agent_hosts):
         exit(1)
     print("Mission has started.")
 
+def tagger_movement(tagger, tagger_action, tagger_cur_pos):
+    global TAGGER_Z, TAGGER_X
+
+    if tagger_cur_pos[0] - tagger_action[0] == 1:
+        #tagger.sendCommand()
+        TAGGER_Z += 1
+    elif tagger_cur_pos[0] - tagger_action[0] == -1:
+        #tagger.sendCommand()
+        TAGGER_Z -= 1
+    elif tagger_cur_pos[1] - tagger_action[1] == 1:
+        #tagger.sendCommand()
+        TAGGER_X += 1
+    elif tagger_cur_pos[1] - tagger_action[1] == -1:
+        #tagger.sendCommand()
+        TAGGER_X -= 1
+
+def runner_movement(runner, runner_cur_pos):
+    global RUNNER_Z, RUNNER_X
+    move = list()
+    # check right
+    if SIZE-1-runner_cur_pos[0]-1 >= 0:
+        if plain_map[runner_cur_pos[1]][SIZE-1-runner_cur_pos[0]-1] != 1:
+            move.append("movenorth")
+    # check left
+    if SIZE-1-runner_cur_pos[0]+1 < SIZE:
+        if plain_map[runner_cur_pos[1]][SIZE-1-runner_cur_pos[0]+1] != 1:
+            move.append("movesouth")
+    # check forward
+    if runner_cur_pos[1]+1 < SIZE:
+        if plain_map[runner_cur_pos[1]+1][SIZE-1-runner_cur_pos[0]] != 1:
+            move.append("movewest")
+    # check back
+    if runner_cur_pos[1]-1 >= 0:
+        if plain_map[runner_cur_pos[1]-1][SIZE-1-runner_cur_pos[0]] != 1:
+            move.append("moveeast")
+
+    next_action = random.choice(move)
+
+    if next_action == "movenorth":
+        runner.sendCommand("movenorth")
+        RUNNER_Z -= 1
+    elif next_action == "movesouth":
+        runner.sendCommand("movesouth")
+        RUNNER_Z += 1
+    elif next_action == "moveeast":
+        runner.sendCommand("moveeast")
+        RUNNER_X += 1
+    elif next_action == "movewest":
+        runner.sendCommand("movewest")
+        RUNNER_X -= 1
+
+def gameover(runner_cur_pos, tagger_cur_pos):
+    if ((runner_cur_pos[0] - tagger_cur_pos[0])**2 + (runner_cur_pos[1] - tagger_cur_pos[1])**2) <= 2:
+        return True
+    return False
+    
 def main():
   # Create default Malmo objects:
   runner = MalmoPython.AgentHost()
@@ -198,55 +337,43 @@ def main():
 
   global RUNNER_Z, RUNNER_X, TAGGER_Z, TAGGER_X
 
-  pmap = playgroundMap(map, int(SIZE/2-RUNNER_Z+1), abs(int(RUNNER_X)), int(SIZE/2-TAGGER_Z+1), abs(int(TAGGER_X)))
+  pmap = playgroundMap(plain_map, int(SIZE/2-RUNNER_Z+1), abs(int(RUNNER_X)), int(SIZE/2-TAGGER_Z+1), abs(int(TAGGER_X)))
+  my_map = map(SIZE, SIZE, plain_map)
 
   # Loop until mission ends:
   while True:
+      
+      print("\n\n")
       #print(".", end="")
-      time.sleep(0.1)
+      
+      #print(f"tagger at {int(SIZE/2-TAGGER_Z+1), abs(int(TAGGER_X))}")
+      #print(f"runner at {int(SIZE/2-RUNNER_Z+1), abs(int(RUNNER_X))}")
       runner_world_state = runner.getWorldState()
       tagger_world_state = tagger.getWorldState()
-      #print(f"Runner at ({RUNNER_Z}, {RUNNER_X})")
-      #print(f"Tagger at ({TAGGER_Z}, {TAGGER_X})")
 
-      if runner_world_state.number_of_observations_since_last_state > 0:
-          runner_obs = json.loads(runner_world_state.observations[0].text)
-          grid = runner_obs.get(f"floor3x3", 0)
-          if runner_obs.get("ZPos", 0)-RUNNER_Z < -0.5:
-              pmap.render(int(SIZE/2-runner_obs.get("ZPos", 0)+1), abs(int(runner_obs.get("XPos", 0))), 0)
-              RUNNER_Z -= 1
-          elif runner_obs.get("ZPos", 0)-RUNNER_Z > 0.5:
-              pmap.render(int(SIZE/2-runner_obs.get("ZPos", 0)+1), abs(int(runner_obs.get("XPos", 0))), 0)
-              RUNNER_Z += 1
-          elif RUNNER_X-runner_obs.get("XPos", 0) < -0.5:
-              pmap.render(int(SIZE/2-runner_obs.get("ZPos", 0)+1), abs(int(runner_obs.get("XPos", 0))), 0)
-              RUNNER_X += 1
-          elif RUNNER_X-runner_obs.get("XPos", 0) > 0.5:
-              pmap.render(int(SIZE/2-runner_obs.get("ZPos", 0)+1), abs(int(runner_obs.get("XPos", 0))), 0)
-              RUNNER_X -= 1
+      my_map.reset()
+      my_map.find_shortest_path()
 
-      if tagger_world_state.number_of_observations_since_last_state > 0:
-          tagger_obs = json.loads(tagger_world_state.observations[0].text)
-          grid = tagger_obs.get(f"floor3x3", 0)
-          if tagger_obs.get("ZPos", 0)-TAGGER_Z < -0.5:
-              pmap.render(int(SIZE/2-tagger_obs.get("ZPos", 0)+1), abs(int(tagger_obs.get("XPos", 0))), 1)
-              TAGGER_Z -= 1
-          elif tagger_obs.get("ZPos", 0)-TAGGER_Z > 0.5:
-              pmap.render(int(SIZE/2-tagger_obs.get("ZPos", 0)+1), abs(int(tagger_obs.get("XPos", 0))), 1)
-              TAGGER_Z += 1
-          elif TAGGER_X-tagger_obs.get("XPos", 0) < -0.5:
-              pmap.render(int(SIZE/2-tagger_obs.get("ZPos", 0)+1), abs(int(tagger_obs.get("XPos", 0))), 1)
-              TAGGER_X += 1
-          elif TAGGER_X-tagger_obs.get("XPos", 0) > 0.5:
-              pmap.render(int(SIZE/2-tagger_obs.get("ZPos", 0)+1), abs(int(tagger_obs.get("XPos", 0))), 1)
-              TAGGER_X -= 1
+      if gameover((int(SIZE/2-RUNNER_Z+1), abs(int(RUNNER_X))), (int(SIZE/2-TAGGER_Z+1), abs(int(TAGGER_X)))):
+        break
+      else:
+        tagger_action = my_map.retrieve()[-1]
+
+      my_map.update_start(tagger_action)
+      tagger_movement(tagger, tagger_action, (int(SIZE/2-TAGGER_Z+1), abs(int(TAGGER_X))))
+      runner_movement(runner, (int(SIZE/2-RUNNER_Z+1), abs(int(RUNNER_X))))
+      pmap.render(int(SIZE/2-RUNNER_Z+1), abs(int(RUNNER_X)), 0)
+      pmap.render(int(SIZE/2-TAGGER_Z+1), abs(int(TAGGER_X)), 1)
+      my_map.update_end((int(SIZE/2-RUNNER_Z+1), int(abs(RUNNER_X))))
+      print(plain_map)
 
       for error in runner_world_state.errors:
           print("Error:",error.text)
       for error in tagger_world_state.errors:
           print("Error:",error.text)
+      time.sleep(2)
 
-  print("Mission ended")
+  print("Game over!")
   # Mission has ended.
 
 if __name__ == "__main__":

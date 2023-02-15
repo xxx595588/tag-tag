@@ -262,18 +262,20 @@ def safeWaitForStart(agent_hosts):
 
 def tagger_movement(tagger, tagger_action, tagger_cur_pos):
     global TAGGER_Z, TAGGER_X
+    print(f"tagger at {tagger_cur_pos}")
+    print(f"going to {tagger_action}")
 
     if tagger_cur_pos[0] - tagger_action[0] == 1:
-        #tagger.sendCommand()
+        tagger.sendCommand("movesouth")
         TAGGER_Z += 1
     elif tagger_cur_pos[0] - tagger_action[0] == -1:
-        #tagger.sendCommand()
+        tagger.sendCommand("movenorth")
         TAGGER_Z -= 1
     elif tagger_cur_pos[1] - tagger_action[1] == 1:
-        #tagger.sendCommand()
+        tagger.sendCommand("moveeast")
         TAGGER_X += 1
     elif tagger_cur_pos[1] - tagger_action[1] == -1:
-        #tagger.sendCommand()
+        tagger.sendCommand("movewest")
         TAGGER_X -= 1
 
 def runner_movement(runner, runner_cur_pos):

@@ -20,8 +20,8 @@ TAGGER_X = -(SIZE-0.5)
 plain_map = np.array([
                      [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
                      [0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
-                     [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1],
-                     [0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+                     [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  0],
+                     [0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  1,  0,  0],
                      [0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1],
                      [1,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1],
                      [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1],
@@ -278,25 +278,47 @@ def tagger_movement(tagger, tagger_action, tagger_cur_pos):
 
 def runner_movement(runner, runner_cur_pos):
     global RUNNER_Z, RUNNER_X
-    move = list()
+    move = dict()
     # check right
     if SIZE-1-runner_cur_pos[0]-1 >= 0:
         if plain_map[runner_cur_pos[1]][SIZE-1-runner_cur_pos[0]-1] != 1:
-            move.append("movenorth")
+            dis = math.sqrt((RUNNER_Z+1-TAGGER_Z)**2 + (RUNNER_X-TAGGER_X)**2)
+            move["movenorth"] = dis
     # check left
     if SIZE-1-runner_cur_pos[0]+1 < SIZE:
         if plain_map[runner_cur_pos[1]][SIZE-1-runner_cur_pos[0]+1] != 1:
-            move.append("movesouth")
+            dis = math.sqrt((RUNNER_Z-1-TAGGER_Z)**2 + (RUNNER_X-TAGGER_X)**2)
+            move["movesouth"] = dis
     # check forward
     if runner_cur_pos[1]+1 < SIZE:
         if plain_map[runner_cur_pos[1]+1][SIZE-1-runner_cur_pos[0]] != 1:
-            move.append("movewest")
+            dis = math.sqrt((RUNNER_Z-TAGGER_Z)**2 + (RUNNER_X+1-TAGGER_X)**2)
+            move["movewest"] = dis
     # check back
     if runner_cur_pos[1]-1 >= 0:
         if plain_map[runner_cur_pos[1]-1][SIZE-1-runner_cur_pos[0]] != 1:
-            move.append("moveeast")
+            dis = math.sqrt((RUNNER_Z-TAGGER_Z)**2 + (RUNNER_X-1-TAGGER_X)**2)
+            move["moveeast"] = dis
 
-    next_action = random.choice(move)
+    move = dict(sorted(move.items(), key=lambda item:item[1]))
+
+    available = list(move.keys())
+    cost = list(move.values())
+    best_cost = cost[0]
+    best = [available[0]]
+
+    for i, c in enumerate(cost):
+        if i == 0:
+            continue
+        if c <= best_cost:
+            best.append(available[i])
+
+    print(best)
+
+    if len(best) == 1:
+        next_action = best[0]
+    else:
+        next_action = random.choice(best)
 
     if next_action == "movenorth":
         runner.sendCommand("movenorth")

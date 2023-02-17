@@ -1,23 +1,27 @@
 from builtins import range
 import MalmoPython
 from playground_map import playgroundMap
+from qLearingAgent import QL_agent
 from map import map
 import os
 import sys
 import time
-import json
-import random
 import math
 import numpy as np
+import matplotlib.pyplot as plt
 
 # length of the playground
-SIZE = 20
+SIZE = 6
+ACTIONS = ["movesouth", "moveeast", "movenorth", "movewest"]
+ITERATION = 1000
 RUNNER_Z = 0.5
 RUNNER_X = -0.5
 TAGGER_Z = 0.5
 TAGGER_X = -(SIZE-0.5)
+SUR_TIME = []
+FINAL = []
 
-plain_map = np.array([
+'''plain_map = np.array([
                      [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
                      [0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
                      [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  0],
@@ -37,7 +41,14 @@ plain_map = np.array([
                      [0,  0,  0,  0,  1,  0,  1,  0,  0,  0,  0,  0,  0,  0,  1,  0,  0,  0,  0,  0],
                      [0,  1,  0,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  0,  0,  0],
                      [0,  0,  0,  0,  0,  0,  0,  0,  1,  0,  1,  0,  0,  0,  0,  0,  0,  0,  1,  0],
-                     [0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  0,  0,  1,  0]])
+                     [0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  0,  0,  1,  0]])'''
+plain_map = np.array([
+                     [0,  0,  0,  0,  0,  0],
+                     [0,  0,  1,  0,  0,  0],
+                     [0,  0,  0,  0,  0,  0],
+                     [0,  0,  0,  0,  0,  0],
+                     [0,  0,  0,  0,  1,  0],
+                     [0,  1,  0,  0,  0,  0]])
 
 my_map = None
 
@@ -108,60 +119,23 @@ missionXML='''<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
                 <ServerHandlers>
                   <FlatWorldGenerator generatorString="3;1*minecraft:bedrock,1*minecraft:grass;2;village"/>
                   <DrawingDecorator>
-                  <DrawLine x1="0" y1="2" z1="0" x2="0" y2="2" z2="11" type="bedrock"/>
-                    <DrawLine x1="0" y1="2" z1="0" x2="0" y2="2" z2="-10" type="bedrock"/>
-                    <DrawLine x1="0" y1="3" z1="0" x2="0" y2="3" z2="11" type="bedrock"/>
-                    <DrawLine x1="0" y1="3" z1="0" x2="0" y2="3" z2="-10" type="bedrock"/>
-                    <DrawLine x1="-21" y1="2" z1="0" x2="-21" y2="2" z2="11" type="bedrock"/>
-                    <DrawLine x1="-21" y1="2" z1="0" x2="-21" y2="2" z2="-10" type="bedrock"/>
-                    <DrawLine x1="-21" y1="3" z1="0" x2="-21" y2="3" z2="11" type="bedrock"/>
-                    <DrawLine x1="-21" y1="3" z1="0" x2="-21" y2="3" z2="-10" type="bedrock"/>
-                    <DrawLine x1="-20" y1="2" z1="11" x2="0" y2="2" z2="11" type="bedrock"/>
-                    <DrawLine x1="-20" y1="2" z1="-10" x2="0" y2="2" z2="-10" type="bedrock"/>
-                    <DrawLine x1="-20" y1="3" z1="11" x2="0" y2="3" z2="11" type="bedrock"/>
-                    <DrawLine x1="-20" y1="3" z1="-10" x2="0" y2="3" z2="-10" type="bedrock"/>
-                    <DrawLine x1="-6" y1="2" z1="-9" x2="-6" y2="3" z2="-9" type="bedrock"/>
-                    <DrawLine x1="-20" y1="2" z1="-8" x2="-20" y2="3" z2="-8" type="bedrock"/>
-                    <DrawLine x1="-18" y1="2" z1="-8" x2="-18" y2="3" z2="-8" type="bedrock"/>
-                    <DrawLine x1="-15" y1="2" z1="-8" x2="-15" y2="3" z2="-8" type="bedrock"/>
-                    <DrawLine x1="-2" y1="2" z1="-7" x2="-2" y2="3" z2="-7" type="bedrock"/>
-                    <DrawLine x1="-18" y1="2" z1="-6" x2="-18" y2="3" z2="-6" type="bedrock"/>
-                    <DrawLine x1="-13" y1="2" z1="-6" x2="-13" y2="3" z2="-6" type="bedrock"/>
-                    <DrawLine x1="-6" y1="2" z1="-6" x2="-6" y2="3" z2="-6" type="bedrock"/>
-                    <DrawLine x1="-5" y1="2" z1="-6" x2="-5" y2="3" z2="-6" type="bedrock"/>
-                    <DrawLine x1="-18" y1="2" z1="-5" x2="-18" y2="3" z2="-5" type="bedrock"/>
-                    <DrawLine x1="-17" y1="2" z1="-5" x2="-17" y2="3" z2="-5" type="bedrock"/>
-                    <DrawLine x1="-10" y1="2" z1="-5" x2="-10" y2="3" z2="-5" type="bedrock"/>
-                    <DrawLine x1="-10" y1="2" z1="-4" x2="-10" y2="3" z2="-4" type="bedrock"/>
-                    <DrawLine x1="-17" y1="2" z1="-3" x2="-17" y2="3" z2="-3" type="bedrock"/>
-                    <DrawLine x1="-19" y1="2" z1="-1" x2="-19" y2="3" z2="-1" type="bedrock"/>
-                    <DrawLine x1="-15" y1="2" z1="-1" x2="-15" y2="3" z2="-1" type="bedrock"/>
-                    <DrawLine x1="-13" y1="2" z1="-1" x2="-13" y2="3" z2="-1" type="bedrock"/>
-                    <DrawLine x1="-12" y1="2" z1="-1" x2="-12" y2="3" z2="-1" type="bedrock"/>
-                    <DrawLine x1="-13" y1="2" z1="0" x2="-13" y2="3" z2="0" type="bedrock"/>
-                    <DrawLine x1="-11" y1="2" z1="0" x2="-11" y2="3" z2="0" type="bedrock"/>
-                    <DrawLine x1="-4" y1="2" z1="0" x2="-4" y2="3" z2="0" type="bedrock"/>
-                    <DrawLine x1="-19" y1="2" z1="1" x2="-19" y2="3" z2="1" type="bedrock"/>
-                    <DrawLine x1="-15" y1="2" z1="3" x2="-15" y2="3" z2="3" type="bedrock"/>
-                    <DrawLine x1="-12" y1="2" z1="4" x2="-12" y2="3" z2="4" type="bedrock"/>
-                    <DrawLine x1="-17" y1="2" z1="5" x2="-17" y2="3" z2="5" type="bedrock"/>
-                    <DrawLine x1="-20" y1="2" z1="6" x2="-20" y2="3" z2="6" type="bedrock"/>
-                    <DrawLine x1="-15" y1="2" z1="6" x2="-15" y2="3" z2="6" type="bedrock"/>
-                    <DrawLine x1="-14" y1="2" z1="6" x2="-14" y2="3" z2="6" type="bedrock"/>
-                    <DrawLine x1="-12" y1="2" z1="6" x2="-12" y2="3" z2="6" type="bedrock"/>
-                    <DrawLine x1="-10" y1="2" z1="6" x2="-10" y2="3" z2="6" type="bedrock"/>
-                    <DrawLine x1="-9" y1="2" z1="6" x2="-9" y2="3" z2="6" type="bedrock"/>
-                    <DrawLine x1="-18" y1="2" z1="7" x2="-18" y2="3" z2="7" type="bedrock"/>
-                    <DrawLine x1="-9" y1="2" z1="7" x2="-9" y2="3" z2="7" type="bedrock"/>
-                    <DrawLine x1="-20" y1="2" z1="9" x2="-20" y2="3" z2="9" type="bedrock"/>
-                    <DrawLine x1="-19" y1="2" z1="9" x2="-19" y2="3" z2="9" type="bedrock"/>
-                    <DrawLine x1="-3" y1="2" z1="9" x2="-3" y2="3" z2="9" type="bedrock"/>
-                    <DrawLine x1="-7" y1="2" z1="10" x2="-7" y2="3" z2="10" type="bedrock"/>
-                    <DrawLine x1="-6" y1="2" z1="10" x2="-6" y2="3" z2="10" type="bedrock"/>
-                    <DrawLine x1="-5" y1="2" z1="10" x2="-5" y2="3" z2="10" type="bedrock"/>
-                    <DrawLine x1="-3" y1="2" z1="10" x2="-3" y2="3" z2="10" type="bedrock"/>
+                  <DrawLine x1="0" y1="2" z1="0" x2="0" y2="2" z2="4" type="bedrock"/>
+                    <DrawLine x1="0" y1="2" z1="0" x2="0" y2="2" z2="-3" type="bedrock"/>
+                    <DrawLine x1="0" y1="3" z1="0" x2="0" y2="3" z2="4" type="bedrock"/>
+                    <DrawLine x1="0" y1="3" z1="0" x2="0" y2="3" z2="-3" type="bedrock"/>
+                    <DrawLine x1="-7" y1="2" z1="0" x2="-7" y2="2" z2="4" type="bedrock"/>
+                    <DrawLine x1="-7" y1="2" z1="0" x2="-7" y2="2" z2="-3" type="bedrock"/>
+                    <DrawLine x1="-7" y1="3" z1="0" x2="-7" y2="3" z2="4" type="bedrock"/>
+                    <DrawLine x1="-7" y1="3" z1="0" x2="-7" y2="3" z2="-3" type="bedrock"/>
+                    <DrawLine x1="-6" y1="2" z1="4" x2="0" y2="2" z2="4" type="bedrock"/>
+                    <DrawLine x1="-6" y1="2" z1="-3" x2="0" y2="2" z2="-3" type="bedrock"/>
+                    <DrawLine x1="-6" y1="3" z1="4" x2="0" y2="3" z2="4" type="bedrock"/>
+                    <DrawLine x1="-6" y1="3" z1="-3" x2="0" y2="3" z2="-3" type="bedrock"/>
+                    <DrawLine x1="-6" y1="2" z1="-1" x2="-6" y2="3" z2="-1" type="bedrock"/>
+                    <DrawLine x1="-2" y1="2" z1="0" x2="-2" y2="3" z2="0" type="bedrock"/>
+                    <DrawLine x1="-5" y1="2" z1="2" x2="-5" y2="3" z2="2" type="bedrock"/>
                   </DrawingDecorator>
-                  <ServerQuitFromTimeUp timeLimitMs="300000"/>
+                  <ServerQuitFromTimeUp timeLimitMs="1000000"/>
                   <ServerQuitWhenAnyAgentFinishes/>
                 </ServerHandlers>
               </ServerSection>
@@ -173,6 +147,7 @@ missionXML='''<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
                 </AgentStart>
                 <AgentHandlers>
                 <DiscreteMovementCommands/>
+                <AbsoluteMovementCommands/>
                 <ObservationFromGrid>
                 <Grid name="floor3x3">
                 <min x="-1" y="0" z="-1"/>
@@ -187,10 +162,11 @@ missionXML='''<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
               <AgentSection mode="Survival">
                 <Name>Tagger</Name>
                 <AgentStart>
-                  <Placement x="-19.5" y="2" z="0.5" yaw="-90"/>
+                  <Placement x="-5.5" y="2" z="0.5" yaw="-90"/>
                 </AgentStart>
                 <AgentHandlers>
                 <DiscreteMovementCommands/>
+                <AbsoluteMovementCommands/>
                 <ObservationFromGrid>
                 <Grid name="floor3x3">
                 <min x="-1" y="0" z="-1"/>
@@ -276,65 +252,65 @@ def tagger_movement(tagger, tagger_action, tagger_cur_pos):
         tagger.sendCommand("movewest")
         TAGGER_X -= 1
 
-def runner_movement(runner, runner_cur_pos):
-    global RUNNER_Z, RUNNER_X
-    move = dict()
-    # check right
-    if SIZE-1-runner_cur_pos[0]-1 >= 0:
-        if plain_map[runner_cur_pos[1]][SIZE-1-runner_cur_pos[0]-1] != 1:
-            dis = math.sqrt((RUNNER_Z+1-TAGGER_Z)**2 + (RUNNER_X-TAGGER_X)**2)
-            move["movenorth"] = dis
-    # check left
-    if SIZE-1-runner_cur_pos[0]+1 < SIZE:
-        if plain_map[runner_cur_pos[1]][SIZE-1-runner_cur_pos[0]+1] != 1:
-            dis = math.sqrt((RUNNER_Z-1-TAGGER_Z)**2 + (RUNNER_X-TAGGER_X)**2)
-            move["movesouth"] = dis
-    # check forward
-    if runner_cur_pos[1]+1 < SIZE:
-        if plain_map[runner_cur_pos[1]+1][SIZE-1-runner_cur_pos[0]] != 1:
-            dis = math.sqrt((RUNNER_Z-TAGGER_Z)**2 + (RUNNER_X+1-TAGGER_X)**2)
-            move["movewest"] = dis
-    # check back
-    if runner_cur_pos[1]-1 >= 0:
-        if plain_map[runner_cur_pos[1]-1][SIZE-1-runner_cur_pos[0]] != 1:
-            dis = math.sqrt((RUNNER_Z-TAGGER_Z)**2 + (RUNNER_X-1-TAGGER_X)**2)
-            move["moveeast"] = dis
+def runner_movement(runner, A, runner_cur_pos, tagger_cur_pos):
+    global RUNNER_Z, RUNNER_X, TAGGER_Z, TAGGER_X
+    
+    """
+          W
+          |
+        6 3 0
+    S-- 7 4 1 --N
+        8 5 2
+          |
+          E
+    position 4 is runner's current position
+    """
+    ori_dis = math.sqrt((RUNNER_Z-TAGGER_Z)**2 + (RUNNER_X-TAGGER_X)**2)
 
-    move = dict(sorted(move.items(), key=lambda item:item[1]))
+    if A == "movenorth":
+        if SIZE-1-runner_cur_pos[0]-1 >= 0 and plain_map[runner_cur_pos[1]][SIZE-1-runner_cur_pos[0]-1] != 1:
+            runner.sendCommand("movenorth")
+            RUNNER_Z -= 1
+            next_S = ((int(SIZE/2-RUNNER_Z+1), int(abs(RUNNER_X))), tagger_cur_pos)
+        else:
+            next_S = (runner_cur_pos, tagger_cur_pos)
+    elif A == "movesouth":
+        if SIZE-1-runner_cur_pos[0]+1 < SIZE and plain_map[runner_cur_pos[1]][SIZE-1-runner_cur_pos[0]+1] != 1:
+            runner.sendCommand("movesouth")
+            RUNNER_Z += 1
+            next_S = ((int(SIZE/2-RUNNER_Z+1), int(abs(RUNNER_X))), tagger_cur_pos)
+        else:
+            next_S = (runner_cur_pos, tagger_cur_pos)
+    elif A == "movewest":
+        if runner_cur_pos[1]+1 < SIZE and plain_map[runner_cur_pos[1]+1][SIZE-1-runner_cur_pos[0]] != 1:
+            runner.sendCommand("movewest")
+            RUNNER_X -= 1
+            next_S = ((int(SIZE/2-RUNNER_Z+1), int(abs(RUNNER_X))), tagger_cur_pos)
+        else:
+            next_S = (runner_cur_pos, tagger_cur_pos)
+    elif A == "moveeast":
+        if runner_cur_pos[1]-1 >= 0 and plain_map[runner_cur_pos[1]-1][SIZE-1-runner_cur_pos[0]] != 1:
+            runner.sendCommand("moveeast")
+            RUNNER_X += 1
+            next_S = ((int(SIZE/2-RUNNER_Z+1), int(abs(RUNNER_X))), tagger_cur_pos)
+        else:
+            next_S = (runner_cur_pos, tagger_cur_pos)
 
-    available = list(move.keys())
-    cost = list(move.values())
-    best_cost = cost[0]
-    best = [available[0]]
+    new_dis = math.sqrt((RUNNER_Z-TAGGER_Z)**2 + (RUNNER_X-TAGGER_X)**2)
 
-    for i, c in enumerate(cost):
-        if i == 0:
-            continue
-        if c <= best_cost:
-            best.append(available[i])
-
-    print(best)
-
-    if len(best) == 1:
-        next_action = best[0]
+    if new_dis <= math.sqrt(2):
+        reward = -100
+    elif new_dis - ori_dis < 0:
+        reward = 100*(new_dis - ori_dis)/ori_dis
+    elif new_dis == ori_dis:
+        reward = 5
     else:
-        next_action = random.choice(best)
-
-    if next_action == "movenorth":
-        runner.sendCommand("movenorth")
-        RUNNER_Z -= 1
-    elif next_action == "movesouth":
-        runner.sendCommand("movesouth")
-        RUNNER_Z += 1
-    elif next_action == "moveeast":
-        runner.sendCommand("moveeast")
-        RUNNER_X += 1
-    elif next_action == "movewest":
-        runner.sendCommand("movewest")
-        RUNNER_X -= 1
+        reward = 10
+  
+    return next_S, reward
 
 def gameover(runner_cur_pos, tagger_cur_pos):
-    if ((runner_cur_pos[0] - tagger_cur_pos[0])**2 + (runner_cur_pos[1] - tagger_cur_pos[1])**2) <= 2:
+    if ((runner_cur_pos[0] - tagger_cur_pos[0])**2 + (runner_cur_pos[1] - tagger_cur_pos[1])**2) <= 1:
         return True
     return False
     
@@ -342,7 +318,6 @@ def main():
   # Create default Malmo objects:
   runner = MalmoPython.AgentHost()
   tagger = MalmoPython.AgentHost()
-
   my_mission = MalmoPython.MissionSpec(missionXML, True)
   runner_mission_record = MalmoPython.MissionRecordSpec()
   tagger_mission_record = MalmoPython.MissionRecordSpec()
@@ -357,46 +332,78 @@ def main():
 
   print("Mission running ", end=' ')
 
-  global RUNNER_Z, RUNNER_X, TAGGER_Z, TAGGER_X
+  global RUNNER_Z, RUNNER_X, TAGGER_Z, TAGGER_X, ACTIONS, SIZE, ITERATION, plain_map, SUR_TIME
 
   pmap = playgroundMap(plain_map, int(SIZE/2-RUNNER_Z+1), abs(int(RUNNER_X)), int(SIZE/2-TAGGER_Z+1), abs(int(TAGGER_X)))
-  my_map = map(SIZE, SIZE, plain_map)
+  my_map = map(plain_map)
+  copy_map = plain_map
+  agent = QL_agent(ACTIONS, SIZE, SIZE)
 
-  # Loop until mission ends:
-  while True:
-      
-      print("\n\n")
-      #print(".", end="")
-      
-      #print(f"tagger at {int(SIZE/2-TAGGER_Z+1), abs(int(TAGGER_X))}")
-      #print(f"runner at {int(SIZE/2-RUNNER_Z+1), abs(int(RUNNER_X))}")
-      runner_world_state = runner.getWorldState()
-      tagger_world_state = tagger.getWorldState()
+  for i in range(ITERATION):
+    start = time.time()
+    print(f"Iteration {i+1}")
+    plain_map = copy_map
+    RUNNER_Z = 0.5
+    RUNNER_X = -0.5
+    TAGGER_Z = 0.5
+    TAGGER_X = -(SIZE-0.5)
+    terminated = False
+    my_map.update_start((int(SIZE/2-TAGGER_Z+1), abs(int(TAGGER_X))))
+    my_map.update_end((int(SIZE/2-RUNNER_Z+1), int(abs(RUNNER_X))))
 
-      my_map.reset()
-      my_map.find_shortest_path()
+    runner.sendCommand("tp -0.5 2 0.5")
+    tagger.sendCommand("tp -5.5 2 0.5")
+    #time.sleep(1)
+    while True:
+        S =((int(SIZE/2-RUNNER_Z+1), abs(int(RUNNER_X))), (int(SIZE/2-TAGGER_Z+1), abs(int(TAGGER_X))))
+        #print("\n\n")
+        #print(".", end="")
+        #print(f"tagger at {int(SIZE/2-TAGGER_Z+1), abs(int(TAGGER_X))}")
+        #print(f"runner at {int(SIZE/2-RUNNER_Z+1), abs(int(RUNNER_X))}")
+        runner_world_state = runner.getWorldState()
+        tagger_world_state = tagger.getWorldState()
 
-      if gameover((int(SIZE/2-RUNNER_Z+1), abs(int(RUNNER_X))), (int(SIZE/2-TAGGER_Z+1), abs(int(TAGGER_X)))):
-        break
-      else:
-        tagger_action = my_map.retrieve()[-1]
+        my_map.reset()
+        my_map.find_shortest_path()
 
-      my_map.update_start(tagger_action)
-      tagger_movement(tagger, tagger_action, (int(SIZE/2-TAGGER_Z+1), abs(int(TAGGER_X))))
-      runner_movement(runner, (int(SIZE/2-RUNNER_Z+1), abs(int(RUNNER_X))))
-      pmap.render(int(SIZE/2-RUNNER_Z+1), abs(int(RUNNER_X)), 0)
-      pmap.render(int(SIZE/2-TAGGER_Z+1), abs(int(TAGGER_X)), 1)
-      my_map.update_end((int(SIZE/2-RUNNER_Z+1), int(abs(RUNNER_X))))
-      print(plain_map)
+        if gameover((int(SIZE/2-RUNNER_Z+1), abs(int(RUNNER_X))), (int(SIZE/2-TAGGER_Z+1), abs(int(TAGGER_X)))):
+            end = time.time()
+            terminated = True
+        else:
+            tagger_action = my_map.retrieve()[-1]
 
-      for error in runner_world_state.errors:
-          print("Error:",error.text)
-      for error in tagger_world_state.errors:
-          print("Error:",error.text)
-      time.sleep(2)
+        my_map.update_start(tagger_action)
+        tagger_movement(tagger, tagger_action, (int(SIZE/2-TAGGER_Z+1), abs(int(TAGGER_X))))
+        A = agent.choose_action(S)
+        next_S, R = runner_movement(runner, A, (int(SIZE/2-RUNNER_Z+1), int(abs(RUNNER_X))), (int(SIZE/2-TAGGER_Z+1), int(abs(TAGGER_X))))
+        agent.update_qtable(A, S, next_S, R, terminated)
+        pmap.render(int(SIZE/2-RUNNER_Z+1), abs(int(RUNNER_X)), 0)
+        pmap.render(int(SIZE/2-TAGGER_Z+1), abs(int(TAGGER_X)), 1)
+        my_map.update_end((int(SIZE/2-RUNNER_Z+1), int(abs(RUNNER_X))))
 
-  print("Game over!")
-  # Mission has ended.
+        for error in runner_world_state.errors:
+            print("Error:",error.text)
+        for error in tagger_world_state.errors:
+            print("Error:",error.text)
+        #time.sleep(1)
+
+        if terminated:
+            break
+
+    SUR_TIME.append(end-start)
+
+    if len(SUR_TIME) == 50:
+        med = np.average(SUR_TIME)
+        FINAL.append(med)
+        SUR_TIME = []
+    print("Game over!")
+
+  plt.plot(range(len(FINAL)), FINAL)
+  plt.show()
+  agent.export_data()
+  print(FINAL)
+    
+    # Mission has ended.
 
 if __name__ == "__main__":
     main()

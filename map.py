@@ -11,9 +11,9 @@ class map():
             self.h = np.inf
             self.prev = None
 
-    def __init__(self, width, height, map_txt):
-        self.width = width
-        self.height = height
+    def __init__(self, map_txt):
+        self.width = len(map_txt)
+        self.height = len(map_txt)
         self.start = None
         self.end = None
         self.cur = None
@@ -25,6 +25,7 @@ class map():
                     self.content[i][len(map_txt[i])-1-j] = self.grid(len(map_txt[i])-1-j, i, True)
                 else:
                     self.content[i][len(map_txt[i])-1-j] = self.grid(len(map_txt[i])-1-j, i)
+
                     if map_txt[i][j] == 8:
                         self.end = (len(map_txt[i])-1-j, i)
                     if map_txt[i][j] == 4:

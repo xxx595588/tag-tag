@@ -1,11 +1,10 @@
 import numpy as np
 from tkinter import *
 
-SIZE = 20
-
 class playgroundMap():
     def __init__(self, map, runner_z, runner_x, tagger_z, tagger_x):
         self.map = map
+        self.size = len(map)
         self.window = Tk()
         self.grid = []
         self.window.title("Playground Map")
@@ -25,10 +24,10 @@ class playgroundMap():
         for i in range(len(self.map)):
             self.grid.append([])
             for j in range(len(self.map[i])-1, -1, -1):
-                if i == runner_x and j == SIZE-1-runner_z:
+                if i == runner_x and j == self.size-1-runner_z:
                     self.grid[i].append(Canvas(self.window, bg="red", height="20", width="20"))
                     self.map[i][j] = 8
-                elif i == tagger_x and j == SIZE-1-tagger_z:
+                elif i == tagger_x and j == self.size-1-tagger_z:
                     self.grid[i].append(Canvas(self.window, bg="blue", height="20", width="20"))
                     self.map[i][j] = 4
                 elif self.map[i][j] == 1:
@@ -38,8 +37,8 @@ class playgroundMap():
 
         self.grid = np.flip(self.grid, axis=0)
 
-        for i in range(SIZE):
-            for j in range(SIZE):
+        for i in range(self.size):
+            for j in range(self.size):
                 self.grid[i][j].grid(row=i, column=j)
         
         self.window.update()
@@ -51,8 +50,8 @@ class playgroundMap():
             self.runner_cur_z = z
             self.runner_cur_x = x
             self.clean_trace(self.runner_pre_z, self.runner_pre_x)
-            self.map[x][SIZE-1-z] = 8
-            self.map[self.runner_pre_x][SIZE-1-self.runner_pre_z] = 0
+            self.map[x][self.size-1-z] = 8
+            self.map[self.runner_pre_x][self.size-1-self.runner_pre_z] = 0
             
         else:
             self.tagger_pre_z = self.tagger_cur_z
@@ -60,8 +59,8 @@ class playgroundMap():
             self.tagger_cur_z = z
             self.tagger_cur_x = x
             self.clean_trace(self.tagger_pre_z, self.tagger_pre_x)
-            self.map[x][SIZE-1-z] = 4
-            self.map[self.tagger_pre_x][SIZE-1-self.tagger_pre_z] = 0
+            self.map[x][self.size-1-z] = 4
+            self.map[self.tagger_pre_x][self.size-1-self.tagger_pre_z] = 0
             
 
         self.grid = np.flip(self.grid, axis=0)
@@ -77,8 +76,8 @@ class playgroundMap():
         # clean up previous position
         for i in range(len(self.map[x])-1, -1, -1):
             if self.map[x][i] == 1:
-                self.grid[x][SIZE-i-1].configure(bg="black")
+                self.grid[x][self.size-i-1].configure(bg="black")
             else:
-                self.grid[x][SIZE-i-1].configure(bg="white")
+                self.grid[x][self.size-i-1].configure(bg="white")
 
         self.grid = np.flip(self.grid, axis=0)

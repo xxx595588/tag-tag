@@ -4,11 +4,19 @@ import math
 
 ACTIONS = ["movesouth", "moveeast", "movenorth", "movewest"]
 
+"""
+The class for runner which inherited from player class
+"""
 class runner(player):
     def __init__(self, MALMO_agent, map_txt, x, y):
         player.__init__(self, MALMO_agent, map_txt, x, y)
+
+        # instance a QL object from QL_agent class in order to find the best next action
         self.QL = QL_agent(ACTIONS, len(self.plain_map[0]), len(self.plain_map))
 
+    """
+    This function will return the next best action accoring to current state by calling QL_agent's member functions
+    """
     def next_action(self, S):
         terminated = self.is_caught(S[1])
         A = self.QL.choose_action(S)
@@ -16,6 +24,9 @@ class runner(player):
         self.QL.update_qtable(A, S, next_S, R, terminated)
         return R
 
+    """
+    This function will determine the next action and update runner's coordinate
+    """
     def next_direction(self, A, pos):
         """
         position 4 is runner's current position
@@ -68,6 +79,9 @@ class runner(player):
 
         return next_S, reward
 
+    """
+    This function will determine if the game is terminated
+    """
     def is_caught(self, pos):
         (x, y) = self.convert_coor()
 
@@ -75,5 +89,8 @@ class runner(player):
             return True
         return False
     
+    """
+    This function will expor the q table as csv file
+    """
     def export_qtable(self):
         self.QL.export_data()   

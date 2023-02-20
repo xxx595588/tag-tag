@@ -1,14 +1,25 @@
+from queue import PriorityQueue
 import numpy as np
 import math
-from queue import PriorityQueue
 
+"""
+This class will be a tagger class member variable to find the shortest path to runner
+"""
 class map():
+
+    """
+    Sub-class that represent rach grid in the map
+    """
     class grid():
         def __init__(self, x, y, obs=False):
             self.x = x
             self.y = y
             self.obs = obs
+
+            # heuristic value 
             self.h = np.inf
+
+            # previous grid in terms of the cost
             self.prev = None
 
     def __init__(self, map_txt):
@@ -35,10 +46,16 @@ class map():
         # calculate the value of h((x, y))
         self.reset()
 
+    """
+    This function will update the end position and heuristic cost after runner moves
+    """
     def update_end(self, end):
         self.end = end
         self.calculate_h()
     
+    """
+    This function will update the start position after tagger moves
+    """
     def update_start(self, start):
         self.start = start
     

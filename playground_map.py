@@ -1,6 +1,9 @@
 import numpy as np
 from tkinter import *
 
+"""
+This class will create a new window to display a bird eye view map
+"""
 class playgroundMap():
     def __init__(self, map, runner_z, runner_x, tagger_z, tagger_x):
         self.map = map
@@ -43,6 +46,11 @@ class playgroundMap():
         
         self.window.update()
 
+    """
+    This function will render the window when either runner or tagger moves
+    
+    id 0 represents runner, and id 1 represents tagger
+    """
     def render(self, z, x, id):
         if id == 0:
             self.runner_pre_z = self.runner_cur_z
@@ -69,7 +77,10 @@ class playgroundMap():
 
         self.grid = np.flip(self.grid, axis=0)
         self.window.update()
-
+    
+    """
+    This function will clean the previous trace when rendering the window
+    """
     def clean_trace(self, z, x):
         self.grid = np.flip(self.grid, axis=0)
 

@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 # length of the playground
 SIZE = 6
-ITERATION = 1000
+ITERATION = 2000
 RUNNER_Z = 0.5
 RUNNER_X = -0.5
 TAGGER_Z = 0.5
@@ -126,14 +126,18 @@ def safeWaitForStart(agent_hosts):
 def main():
     global RUNNER_Z, RUNNER_X, TAGGER_Z, TAGGER_X, SIZE, ITERATION, plain_map, SUR_TIME, FINAL
 
+    # creating runner & tagger agent 
     runner_agent = runner(MalmoPython.AgentHost(), plain_map, RUNNER_Z, RUNNER_X)
     tagger_agent = tagger(MalmoPython.AgentHost(), plain_map, TAGGER_Z, TAGGER_X)
 
+    # get the most current coordinate for both runner & tagger
     runner_coor = runner_agent.convert_coor()
     tagger_coor = tagger_agent.convert_coor()
 
+    # creating the bird eye view map window
     pmap = playgroundMap(plain_map, runner_coor[0], runner_coor[1], tagger_coor[0], tagger_coor[1])
     
+    # read the mission file
     mission_file = "./tag.xml"
     with open(mission_file, "r") as f:
         print(f"Loading mission from {mission_file}")
@@ -161,7 +165,6 @@ def main():
         tagger_agent.teleport(TAGGER_X, TAGGER_Z)
         runner_coor = runner_agent.convert_coor()
         tagger_coor = tagger_agent.convert_coor()
-        reward = 0
 
         while not runner_agent.is_caught(tagger_coor):
             S = (runner_coor, tagger_coor)
@@ -171,21 +174,19 @@ def main():
             if runner_agent.is_caught(tagger_coor):
                 break
             S = (runner_coor, tagger_coor)
-            reward += runner_agent.next_action(S)
+            runner_agent.next_action(S)
 
             runner_coor = runner_agent.convert_coor()
             pmap.render(runner_coor[0], runner_coor[1], 0)
             pmap.render(tagger_coor[0], tagger_coor[1], 1)
 
         end = time.time()
-       
-        reward += 1000*(end-start)
-        #print(f"reward is {reward}")
+    
         SUR_TIME.append(end-start)
 
         if len(SUR_TIME) == 50:
-            med = np.average(SUR_TIME)
-            FINAL.append(med)
+            mid = np.average(SUR_TIME)
+            FINAL.append(mid)
             SUR_TIME = []
         print("Game over!")
 

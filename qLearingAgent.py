@@ -3,6 +3,14 @@ import numpy as np
 import pandas as pd
 import random
 
+"""
+This class will be a runner class member variable and will be utilized to help runner make the decision
+
+Arguments
+    epsilon: <float>  randomness        (default = 0.05)
+    alpha:   <float>  learning rate      (default = 0.3)
+    gamma:   <float>  value decay rate   (default = 1)
+"""
 class QL_agent():
     def __init__(self, actions, width, height, epsilon=0.05, alpha=0.2, gamma=1):
         self.actions = actions
@@ -25,6 +33,9 @@ class QL_agent():
         self.states = pd.MultiIndex.from_tuples(self.states, names=["runner", "tagger"])
         self.qtable = pd.DataFrame(np.zeros((len(self.states), len(self.actions))), columns = self.actions, index = self.states)
 
+    """
+    This function will return the best action under current state
+    """
     def choose_action(self, S):
         rnd = random.random()
 
@@ -44,7 +55,10 @@ class QL_agent():
                 return random.choice(candidate)
             else:
                 return candidate[0]
-            
+    
+    """
+    This function will update the q table according to the feedback
+    """
     def update_qtable(self, A, S, next_S, R, terminated):
         i = self.actions.index(A)
         q = self.qtable.loc(axis=0)[[S[0]], [S[1]]].values[0][i]

@@ -6,7 +6,7 @@ import MalmoPython
 import time
 import numpy as np
 import matplotlib.pyplot as plt
-
+from training_visualization import Visualizer
 # length of the playground
 SIZE = 6
 ITERATION = 100
@@ -126,6 +126,9 @@ def safeWaitForStart(agent_hosts):
 def main():
     global RUNNER_Z, RUNNER_X, TAGGER_Z, TAGGER_X, SIZE, ITERATION, plain_map, SUR_TIME, FINAL
 
+    # an updating plot
+    vl = Visualizer(iteration=ITERATION, step=1)
+
     # creating runner & tagger agent 
     runner_agent = runner(MalmoPython.AgentHost(), plain_map, RUNNER_Z, RUNNER_X)
     tagger_agent = tagger(MalmoPython.AgentHost(), plain_map, TAGGER_Z, TAGGER_X)
@@ -187,16 +190,16 @@ def main():
         end = time.time()
         t = end-start
         SUR_TIME.append(t)
-        
+        vl.add(t)
         if len(SUR_TIME) == 5:
             mid = np.average(SUR_TIME)
             FINAL.append(mid)
             SUR_TIME = []
         print("Game over!")
 
-
-    plt.plot(range(len(FINAL)), FINAL)
-    plt.show()
+    vl.show()
+    # plt.plot(range(len(FINAL)), FINAL)
+    # plt.show()
 
     runner_agent.export_qtable()   
     # Mission has ended.

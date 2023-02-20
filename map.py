@@ -3,12 +3,12 @@ import numpy as np
 import math
 
 """
-This class will be a tagger class member variable to find the shortest path to runner
+This class will be a class member variable to find the shortest path to target
 """
 class map():
 
     """
-    Sub-class that represent rach grid in the map
+    Sub-class that represent each grid in the map
     """
     class grid():
         def __init__(self, x, y, obs=False):
@@ -47,14 +47,14 @@ class map():
         self.reset()
 
     """
-    This function will update the end position and heuristic cost after runner moves
+    This function will update the end position and heuristic cost after target moves
     """
     def update_end(self, end):
         self.end = end
         self.calculate_h()
     
     """
-    This function will update the start position after tagger moves
+    This function will update the start position after object itself moves
     """
     def update_start(self, start):
         self.start = start

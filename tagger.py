@@ -1,5 +1,6 @@
 from player import player
 from map import map
+import time
 
 """
 The class for tagger which inherited from player class
@@ -7,9 +8,6 @@ The class for tagger which inherited from player class
 class tagger(player):
     def __init__(self, MALMO_agent, map_txt, x, y):
         player.__init__(self, MALMO_agent, map_txt, x, y)
-
-        # instance a map object from map class in order to find the shortest path to runner
-        self.map = map(self.plain_map)
     
     """ 
     This function will determine the next action and update tagger's coordinate
@@ -17,18 +15,19 @@ class tagger(player):
     def find_direction(self, next_coor):
         (x, y) = self.convert_coor()
 
+        time.sleep(0.2)
         if x - next_coor[0] > 0:
             self.raw_x += 1
-            return "movesouth"
+            self.MALMO_agent.sendCommand("movesouth")
         elif x - next_coor[0] < 0:
             self.raw_x -= 1
-            return "movenorth"
+            self.MALMO_agent.sendCommand("movenorth")
         elif y - next_coor[1] > 0:
             self.raw_y += 1
-            return "moveeast"
+            self.MALMO_agent.sendCommand("moveeast")
         elif y - next_coor[1] < 0:
             self.raw_y -= 1
-            return "movewest"
+            self.MALMO_agent.sendCommand("movewest")
     
     """
     This function will find the shortest path to runner by calling map's member function
@@ -38,5 +37,4 @@ class tagger(player):
         self.map.update_end(end)
         self.map.reset()
         self.map.find_shortest_path()
-        next_action = self.find_direction(self.map.retrieve()[-1])
-        self.MALMO_agent.sendCommand(next_action)
+        self.find_direction(self.map.retrieve()[-1])

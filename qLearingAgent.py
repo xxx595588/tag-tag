@@ -12,7 +12,7 @@ Arguments
     gamma:   <float>  value decay rate   (default = 1)
 """
 class QL_agent():
-    def __init__(self, actions, width, height, epsilon=0.05, alpha=0.2, gamma=1):
+    def __init__(self, actions, width, height, epsilon=0.1, alpha=0.3, gamma=1):
         self.actions = actions
         self.epsilon = epsilon
         self.alpha = alpha
@@ -40,7 +40,7 @@ class QL_agent():
         rnd = random.random()
 
         # take random action
-        if rnd <= self.epsilon:
+        if rnd < self.epsilon:
             return random.choice(self.actions)
         else:
             # find the best movement

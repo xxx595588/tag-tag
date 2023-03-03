@@ -127,7 +127,7 @@ def main():
     global RUNNER_Z, RUNNER_X, TAGGER_Z, TAGGER_X, SIZE, ITERATION, plain_map, SUR_TIME, FINAL
 
     # an updating plot
-    vl = Visualizer(iteration=ITERATION, step=1)
+    vl = Visualizer(iteration=ITERATION, step=5)
 
     # creating runner & tagger agent 
     runner_agent = runner(MalmoPython.AgentHost(), plain_map, RUNNER_Z, RUNNER_X)
@@ -158,7 +158,7 @@ def main():
     safeStartMission(tagger_agent.getAgent(), my_mission, client_pool, tagger_mission_record, 1, "")
     safeWaitForStart([runner_agent.getAgent(), tagger_agent.getAgent()])
 
-    print("Mission running ", end=' ')
+    print("Mission running\n")
 
     for i in range(ITERATION):
         print(f"Iteration {i+1}")
@@ -168,38 +168,54 @@ def main():
         tagger_agent.teleport(TAGGER_X, TAGGER_Z)
         runner_coor = runner_agent.convert_coor()
         tagger_coor = tagger_agent.convert_coor()
+        S = (runner_coor, tagger_coor)
         pmap.render(runner_coor[0], runner_coor[1], 0)
         pmap.render(tagger_coor[0], tagger_coor[1], 1)
 
-        while True:
-            S = (runner_coor, tagger_coor)
-            tagger_agent.find_path(runner_coor)
+        grid = runner_agent.getEnvir()
 
+        terminated = runner_agent.next_action(S, grid)
+        runner_coor = runner_agent.convert_coor()
+        
+
+
+        while not runner_agent.is_caught(tagger_coor):
+            time.sleep(1)
+            S = (runner_coor, tagger_coor)
+            grid = runner_agent.getEnvir()
+            tagger_agent.find_path(runner_coor, grid)
             tagger_coor = tagger_agent.convert_coor()
-            
             S = (runner_coor, tagger_coor)
-            runner_agent.next_action(S)
 
+            if terminated:
+                break
+
+            terminated = runner_agent.next_action(S, grid)
             runner_coor = runner_agent.convert_coor()
+
+            if terminated:
+                break
+
             pmap.render(runner_coor[0], runner_coor[1], 0)
             pmap.render(tagger_coor[0], tagger_coor[1], 1)
 
-            if runner_agent.is_caught(tagger_coor):
-                break
+        pmap.render(runner_coor[0], runner_coor[1], 0)
+        pmap.render(tagger_coor[0], tagger_coor[1], 1)
 
         end = time.time()
         t = end-start
         SUR_TIME.append(t)
-        vl.add(t)
+        
         if len(SUR_TIME) == 5:
+            
             mid = np.average(SUR_TIME)
+            vl.add(mid)
             FINAL.append(mid)
             SUR_TIME = []
+
         print("Game over!")
 
     vl.show()
-    # plt.plot(range(len(FINAL)), FINAL)
-    # plt.show()
 
     runner_agent.export_qtable()   
     # Mission has ended.

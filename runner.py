@@ -28,32 +28,28 @@ class runner(player):
     """
     This function will return the next best action accoring to current state by calling QL_agent's member functions
     """
-    def next_action(self, S):
+    def next_action(self, S, grid):
         A = self.QL.choose_action(S)
-        next_S, R, terminated= self.next_direction(A, S[1])
+        next_S, R, terminated= self.next_direction(A, S[1], grid)
         self.QL.update_qtable(A, S, next_S, R, terminated)
-        return R
+        return terminated
     
     def is_surrounded(self, grid):
-        counter = 0
-
-        if grid[3] == "bedrock":
-            counter += 1
-        if grid[1] == "bedrock":
-            counter += 1
-        if grid[5] == "bedrock":
-            counter += 1
-        if grid[7] == "bedrock":
-            counter += 1
-
-        if counter >= 2:
+        if grid[3] == "air" and grid[1] == "bedrock" and grid[7] == "bedrock" and grid[5] == "bedrock":
             return True
+        if grid[3] == "bedrock" and grid[1] == "air" and grid[7] == "bedrock" and grid[5] == "bedrock":
+            return True
+        if grid[3] == "bedrock" and grid[1] == "bedrock" and grid[7] == "air" and grid[5] == "bedrock":
+            return True
+        if grid[3] == "bedrock" and grid[1] == "bedrock" and grid[7] == "bedrock" and grid[5] == "air":
+            return True
+        
         return False
 
     """
     This function will determine the next action and update runner's coordinate
     """
-    def next_direction(self, A, pos):
+    def next_direction(self, A, pos, grid):
         """
         position 4 is runner's current position
 
@@ -66,36 +62,31 @@ class runner(player):
                    E (+x)
     
         """
-
-        world_state = self.MALMO_agent.getWorldState()
-        msg = world_state.observations[0].text
-        observations = json.loads(msg)
-        grid = observations.get(f"floor3x3", 0)
-
-        time.sleep(0.2)
+        
+        #grid = self.getEnvir()
         surrounded = self.is_surrounded(grid)
         (x, y) = self.convert_coor()
         size = len(self.plain_map)
     
         ori_dis = self.find_distance(pos)
 
-        if A == "movenorth":
-            if size-x-2 >= 0 and self.plain_map[y][size-x-2] != 1:
-                self.MALMO_agent.sendCommand("movenorth")
-                self.raw_x -= 1
-        elif A == "movesouth":
-            if size-x < size and self.plain_map[y][size-x] != 1:
-                self.MALMO_agent.sendCommand("movesouth")
-                self.raw_x += 1     
-        elif A == "movewest":
-            if y+1 < size and self.plain_map[y+1][size-x-1] != 1:
-                self.MALMO_agent.sendCommand("movewest")
-                self.raw_y -= 1   
-        elif A == "moveeast":
-            if y-1 >= 0 and self.plain_map[y-1][size-x-1] != 1:
-                self.MALMO_agent.sendCommand("moveeast")
-                self.raw_y += 1
-                
+        if A == "movenorth" and grid[1] == "air":
+            #if size-x-2 >= 0 and self.plain_map[y][size-x-2] != 1:
+            self.MALMO_agent.sendCommand("movenorth")
+            self.raw_x -= 1
+        elif A == "movesouth" and grid[7] == "air":
+            #if size-x < size and self.plain_map[y][size-x] != 1:
+            self.MALMO_agent.sendCommand("movesouth")
+            self.raw_x += 1
+        elif A == "movewest" and grid[3] == "air":
+            #if y+1 < size and self.plain_map[y+1][size-x-1] != 1:
+            self.MALMO_agent.sendCommand("movewest")
+            self.raw_y -= 1
+        elif A == "moveeast" and grid[5] == "air":
+            #if y-1 >= 0 and self.plain_map[y-1][size-x-1] != 1:
+            self.MALMO_agent.sendCommand("moveeast")
+            self.raw_y += 1                
+        
         next_S = (self.convert_coor(), pos)
         new_dis = self.find_distance(pos)
 
@@ -103,18 +94,19 @@ class runner(player):
         
 
         if terminated:
-            reward = -500
+            reward = -5000
         elif surrounded:
-            if new_dis < ori_dis:
-                reward = 1000*(ori_dis - new_dis)/ori_dis
-            else: reward = 1000*(new_dis - ori_dis)/ori_dis
+            if new_dis < ori_dis and new_dis >= 3: 
+                reward = 50*ori_dis
+            else:
+                reward = 1000*(new_dis - ori_dis)/ori_dis
         elif new_dis < ori_dis:
             reward = 1000*(new_dis - ori_dis)/ori_dis
         elif new_dis == ori_dis:
-            reward = -50
+            reward = -2000
         else:
             reward = 50*(new_dis - ori_dis)*new_dis
-        
+
         return next_S, reward, terminated
 
     """

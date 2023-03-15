@@ -4,7 +4,7 @@ import pandas as pd
 import random
 
 """
-This class will be a runner class member variable and will be utilized to help runner make the decision
+This class will be runner class' member variable and will be utilized to help runner make the decision
 
 Arguments
     epsilon: <float>  randomness        (default = 0.05)

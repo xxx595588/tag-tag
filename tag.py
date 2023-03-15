@@ -7,6 +7,7 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 from training_visualization import Visualizer
+
 # length of the playground
 SIZE = 6
 ITERATION = 100
@@ -177,8 +178,6 @@ def main():
         terminated = runner_agent.next_action(S, grid)
         runner_coor = runner_agent.convert_coor()
         
-
-
         while not runner_agent.is_caught(tagger_coor):
             time.sleep(1)
             S = (runner_coor, tagger_coor)

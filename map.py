@@ -3,12 +3,12 @@ import numpy as np
 import math
 
 """
-This class will be a class member variable to find the shortest path to target
+This class will be player class' member variable to find the shortest path to the given target
 """
 class map():
 
     """
-    Sub-class that represent each grid in the map
+    Sub-class that represents each grid in the map
     """
     class grid():
         def __init__(self, x, y, obs=False):
@@ -69,7 +69,7 @@ class map():
                     self.content[i][j].h = math.sqrt((self.content[i][j].x - self.end[0])**2 + (self.content[i][j].y - self.end[1])**2)
 
     """
-    This function must be call when starting a new search
+    This function must be called when starting a new search
     """
     def reset(self):
         self.cur = self.start

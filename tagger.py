@@ -126,7 +126,3 @@ class tagger(player):
         self.map.reset()
         self.map.find_shortest_path()
         self.find_direction(self.map.retrieve()[-1])
-
-
-
-        

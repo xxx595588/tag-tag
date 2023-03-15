@@ -1,7 +1,5 @@
 from player import player
 from qLearingAgent import QL_agent
-import time
-import json
 
 ACTIONS = ["movesouth", "moveeast", "movenorth", "movewest"]
 
@@ -63,27 +61,19 @@ class runner(player):
     
         """
         
-        #grid = self.getEnvir()
         surrounded = self.is_surrounded(grid)
-        (x, y) = self.convert_coor()
-        size = len(self.plain_map)
-    
         ori_dis = self.find_distance(pos)
 
         if A == "movenorth" and grid[1] == "air":
-            #if size-x-2 >= 0 and self.plain_map[y][size-x-2] != 1:
             self.MALMO_agent.sendCommand("movenorth")
             self.raw_x -= 1
         elif A == "movesouth" and grid[7] == "air":
-            #if size-x < size and self.plain_map[y][size-x] != 1:
             self.MALMO_agent.sendCommand("movesouth")
             self.raw_x += 1
         elif A == "movewest" and grid[3] == "air":
-            #if y+1 < size and self.plain_map[y+1][size-x-1] != 1:
             self.MALMO_agent.sendCommand("movewest")
             self.raw_y -= 1
         elif A == "moveeast" and grid[5] == "air":
-            #if y-1 >= 0 and self.plain_map[y-1][size-x-1] != 1:
             self.MALMO_agent.sendCommand("moveeast")
             self.raw_y += 1                
         
@@ -92,7 +82,6 @@ class runner(player):
 
         terminated = self.is_caught(pos)
         
-
         if terminated:
             reward = -5000
         elif surrounded:
@@ -120,7 +109,7 @@ class runner(player):
         return False
     
     """
-    This function will expor the q table as csv file
+    This function will export the q table as csv file
     """
     def export_qtable(self):
         self.QL.export_data()   

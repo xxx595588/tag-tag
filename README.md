@@ -1,13 +1,18 @@
 # tag-tag
 
+## Table of contents
+* [Summary](#summary)
+* [Approaches](#approaches)
+* [Pros & Cons](#pros--cons)
+* [Evaluation](#evaluation)
 
-## Project Summary
+## Summary
 
 &emsp;&emsp;Our project is based on an implementation of a tag game. It involves the programming of two Artificial Intelligence: the runner and the tagger. The tagger is programmed with logic that allows it to approach and try to tag the runner. Additionally, the tagger may attempt to further predict the runner’s next action and involve it as a factor in the tagger’s action determination. The runner is programmed with machine learning algorithms that allow it to gradually learn how to survive longer - avoid being tagged by the tagger.
 
 &emsp;&emsp;The goal of our project is to implement the semantics stated above. In this semantics, the performance of the tagger is supposed to be constant because the tagger does not possess any learning capability. The performance of the runner is supposed to vary based on the effectiveness of the machine-learning algorithm. With these premises in mind, the quality of our project can be determined by assessing the growth of the runner’s survival time after a certain amount of game iterations. Thus, the major focus of our project is to implement and continuously improve the runner’s backend machine-learning algorithm, so that the runner’s survival time can be improved as we train the runner through game iterations.
   
-##  Approaches
+## Approaches
 &emsp;&emsp;To summarize the approach, our project is composed of a runner and tagger component, and we're utilizing `tabular q-learning with epsilon greedy exploration` for the runner as our reinforcement learning algorithm. The q table would be updated by the following equation:
   
 <br />
@@ -59,7 +64,7 @@ $$g(n) represents the cost from start point to current point$$
 $$h(n)  represents the heuristic cost at point n, h(n)actual distance from n to end point$$
 
 
-## Pros & Cons:
+## Pros & Cons
 
 ### Advantages:
 - Every combination of states is precisely defined in our Q-table, so there exist corresponding values for each state.

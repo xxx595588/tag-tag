@@ -8,6 +8,10 @@
 
 ## Summary
 
+<p align="center">
+  <img width="684" alt="Screen Shot 2023-04-08 at 9 48 51 AM" src="https://user-images.githubusercontent.com/61955371/230733264-c8827f68-3ea7-45c5-ba10-3a3b7e84477e.png">
+</p>
+
 &emsp;&emsp;Our project is based on an implementation of a tag game. It involves the programming of two Artificial Intelligence: the runner and the tagger. The tagger is programmed with logic that allows it to approach and try to tag the runner. Additionally, the tagger may attempt to further predict the runner’s next action and involve it as a factor in the tagger’s action determination. The runner is programmed with machine learning algorithms that allow it to gradually learn how to survive longer - avoid being tagged by the tagger.
 
 &emsp;&emsp;The goal of our project is to implement the semantics stated above. In this semantics, the performance of the tagger is supposed to be constant because the tagger does not possess any learning capability. The performance of the runner is supposed to vary based on the effectiveness of the machine-learning algorithm. With these premises in mind, the quality of our project can be determined by assessing the growth of the runner’s survival time after a certain amount of game iterations. Thus, the major focus of our project is to implement and continuously improve the runner’s backend machine-learning algorithm, so that the runner’s survival time can be improved as we train the runner through game iterations.

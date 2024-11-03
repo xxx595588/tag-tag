@@ -63,9 +63,9 @@ The state in q table looks like:
 
 $$f(n) = g(n) + h(n)$$
 
-$$g(n) represents the cost from start point to current point$$
+$$g(n) \text{, represents the cost from start point to current point}$$
 
-$$h(n)  represents the heuristic cost at point n, h(n)actual distance from n to end point$$
+$$h(n) \text{, represents the heuristic cost at point n}$$
 
 
 ## Pros & Cons
